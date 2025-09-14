@@ -51,7 +51,6 @@ def main():
     local_css()
 
     st.title("🎬 Movie Recommendation System")
-
     df = load_data()
 
     # Debug: show columns loaded and sample data
@@ -62,28 +61,16 @@ def main():
         st.error("Error: 'title' column not found in the dataset.")
         st.stop()
 
-    # Drop the title column for genre features
     genre_cols = [
-    "adventure",
-    "animation",
-    "comedy",
-    "fantasy",
-    "romance",
-    "children",
-    "drama",
-    "documentary",
-    "crime",
-    "sci-fi",
-    "horror",
-    "mystery",
-    "war",
-    "thriller",
-    "action"
-]
+        "adventure", "animation", "comedy", "fantasy", "romance", "children",
+        "drama", "documentary", "crime", "sci-fi", "horror", "mystery", "war",
+        "thriller", "action"
+    ]
 
+    # Prepare data by dropping title to use genre features only
+    data = df[genre_cols]
 
     st.markdown("### Select your favorite genres:")
-
     col1, col2 = st.columns(2)
     selected_genres = []
     half = len(genre_cols) // 2
@@ -118,6 +105,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-
