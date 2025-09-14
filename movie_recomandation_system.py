@@ -41,8 +41,6 @@ def local_css():
 @st.cache_data
 def load_data():
     df = pd.read_csv("final_movies.csv")
-    # Normalize columns: strip spaces and lowercase
-    df.columns = df.columns.str.strip().str.lower()
     return df
 
 def main():
@@ -65,8 +63,24 @@ def main():
         st.stop()
 
     # Drop the title column for genre features
-    data = df.drop(columns=['title'])
-    genre_cols = list(data.columns)
+    genre_cols = [
+    "adventure",
+    "animation",
+    "comedy",
+    "fantasy",
+    "romance",
+    "children",
+    "drama",
+    "documentary",
+    "crime",
+    "sci-fi",
+    "horror",
+    "mystery",
+    "war",
+    "thriller",
+    "action"
+]
+
 
     st.markdown("### Select your favorite genres:")
 
@@ -104,3 +118,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
