@@ -41,7 +41,7 @@ def local_css():
 @st.cache_data
 def load_data():
     # Load Excel dataset with raw string path; adjust path if needed
-    df = pd.read_excel("modified_full_movies_dataset.xls")
+    df = pd.read_csv("final_movies.csv")
     return df
 
 def main():
@@ -93,4 +93,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
