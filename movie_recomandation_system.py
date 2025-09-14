@@ -40,7 +40,7 @@ def local_css():
 
 @st.cache_data
 def load_data():
-    df = pd.read_csv("final_movies.csv")
+    df = pd.read_csv("movies_list.csv")
     return df
 
 def main():
@@ -118,4 +118,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
