@@ -34,30 +34,37 @@ def local_css():
             font-weight: 600;
         }
         </style>
-        """, unsafe_allow_html=True
+        """,
+        unsafe_allow_html=True,
     )
 
 @st.cache_data
 def load_data():
     df = pd.read_csv("final_movies.csv")
-    # Normalize column names: strip and lower case
+    # Normalize columns: strip spaces and lowercase
     df.columns = df.columns.str.strip().str.lower()
-    # Optional: show columns for debugging
-    st.write("Columns in dataset:", df.columns.tolist())
     return df
 
 def main():
-    st.set_page_config(page_title="Welcome to Movie Recommendation System", layout="centered")
+    st.set_page_config(
+        page_title="Welcome to Movie Recommendation System",
+        layout="centered",
+    )
     local_css()
+
     st.title("🎬 Movie Recommendation System")
 
     df = load_data()
 
-    # Check if title column exists after normalization
+    # Debug: show columns loaded and sample data
+    st.write("Columns loaded:", df.columns.tolist())
+    st.write(df.head())
+
     if 'title' not in df.columns:
-        st.error("Error: 'title' column not found in dataset!")
+        st.error("Error: 'title' column not found in the dataset.")
         st.stop()
 
+    # Drop the title column for genre features
     data = df.drop(columns=['title'])
     genre_cols = list(data.columns)
 
@@ -85,7 +92,9 @@ def main():
         else:
             knn = NearestNeighbors(n_neighbors=5, metric='cosine')
             knn.fit(data)
-            user_vector = np.array([1 if g in selected_genres else 0 for g in genre_cols]).reshape(1, -1)
+            user_vector = np.array(
+                [1 if genre in selected_genres else 0 for genre in genre_cols]
+            ).reshape(1, -1)
             distances, indices = knn.kneighbors(user_vector)
             recommended = df.iloc[indices[0]]['title'].values
 
