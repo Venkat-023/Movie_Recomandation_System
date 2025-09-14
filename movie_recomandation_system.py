@@ -40,7 +40,7 @@ def local_css():
 
 @st.cache_data
 def load_data():
-    df = pd.read_excel("final10.xls")
+    df = pd.read_excel("final10.xls", engine='xlrd')
     return df
 
 def main():
@@ -105,6 +105,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
