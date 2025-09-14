@@ -3,7 +3,6 @@ import pandas as pd
 import numpy as np
 from sklearn.neighbors import NearestNeighbors
 
-# Inject peach-themed CSS for the app
 def local_css():
     st.markdown(
         """
@@ -40,26 +39,30 @@ def local_css():
 
 @st.cache_data
 def load_data():
-    # Load Excel dataset with raw string path; adjust path if needed
     df = pd.read_csv("final_movies.csv")
+    # Normalize column names: strip and lower case
+    df.columns = df.columns.str.strip().str.lower()
+    # Optional: show columns for debugging
+    st.write("Columns in dataset:", df.columns.tolist())
     return df
 
 def main():
-    # Page config with browser tab title
     st.set_page_config(page_title="Welcome to Movie Recommendation System", layout="centered")
     local_css()
-
     st.title("🎬 Movie Recommendation System")
 
     df = load_data()
 
-    # All genre columns except 'title'
+    # Check if title column exists after normalization
+    if 'title' not in df.columns:
+        st.error("Error: 'title' column not found in dataset!")
+        st.stop()
+
     data = df.drop(columns=['title'])
     genre_cols = list(data.columns)
 
     st.markdown("### Select your favorite genres:")
 
-    # Two column layout for checkboxes
     col1, col2 = st.columns(2)
     selected_genres = []
     half = len(genre_cols) // 2
@@ -68,6 +71,7 @@ def main():
         for genre in genre_cols[:half]:
             if st.checkbox(genre, key=genre):
                 selected_genres.append(genre)
+
     with col2:
         for genre in genre_cols[half:]:
             if st.checkbox(genre, key=genre + "_2"):
@@ -81,10 +85,8 @@ def main():
         else:
             knn = NearestNeighbors(n_neighbors=5, metric='cosine')
             knn.fit(data)
-
             user_vector = np.array([1 if g in selected_genres else 0 for g in genre_cols]).reshape(1, -1)
             distances, indices = knn.kneighbors(user_vector)
-
             recommended = df.iloc[indices[0]]['title'].values
 
             st.markdown("### Top 5 Recommended Movies:")
@@ -93,5 +95,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
