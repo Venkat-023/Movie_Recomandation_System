@@ -40,7 +40,8 @@ def local_css():
 
 @st.cache_data
 def load_data():
-    df = pd.read_csv("final10.xls")
+    df = pd.read_csv("final_movies.xls")
+    df.columns = df.columns.str.strip().str.lower()
     return df
 
 def main():
@@ -48,17 +49,17 @@ def main():
         page_title="Welcome to Movie Recommendation System",
         layout="centered",
     )
-    local_css()
 
+    local_css()
     st.title("🎬 Movie Recommendation System")
+
     df = load_data()
 
-    # Debug: show columns loaded and sample data
     st.write("Columns loaded:", df.columns.tolist())
     st.write(df.head())
 
     if 'title' not in df.columns:
-        st.error("Error: 'title' column not found in the dataset.")
+        st.error("Error: 'title' column not found in dataset!")
         st.stop()
 
     genre_cols = [
@@ -67,10 +68,11 @@ def main():
         "thriller", "action"
     ]
 
-    # Prepare data by dropping title to use genre features only
+    # Prepare features data for KNN
     data = df[genre_cols]
 
     st.markdown("### Select your favorite genres:")
+
     col1, col2 = st.columns(2)
     selected_genres = []
     half = len(genre_cols) // 2
@@ -105,11 +107,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-
-
-
-
-
-
