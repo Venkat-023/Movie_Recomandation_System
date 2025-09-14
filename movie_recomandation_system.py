@@ -40,7 +40,7 @@ def local_css():
 
 @st.cache_data
 def load_data():
-    df = pd.read_csv("movies_data.csv", quotechar='"', skipinitialspace=True)
+    df = pd.read_csv("final10.xls")
     return df
 
 def main():
@@ -105,5 +105,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
