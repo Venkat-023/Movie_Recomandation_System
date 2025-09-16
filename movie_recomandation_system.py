@@ -54,21 +54,12 @@ def main():
     st.title("🎬 Movie Recommendation System")
 
     df = load_data()
-
-    st.write("Columns loaded:", df.columns.tolist())
-    st.write(df.head())
-
-    if 'title' not in df.columns:
-        st.error("Error: 'title' column not found in dataset!")
-        st.stop()
-
     genre_cols = [
         "adventure", "animation", "comedy", "fantasy", "romance", "children",
         "drama", "documentary", "crime", "sci-fi", "horror", "mystery", "war",
         "thriller", "action"
     ]
 
-    # Prepare features data for KNN
     data = df[genre_cols]
 
     st.markdown("### Select your favorite genres:")
@@ -107,4 +98,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
