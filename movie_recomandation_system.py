@@ -3,6 +3,10 @@ import pandas as pd
 import numpy as np
 from sklearn.neighbors import NearestNeighbors
 import imdb
+import logging
+
+# Setup logging to console for debugging
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
 def local_css():
     st.markdown(
@@ -45,28 +49,33 @@ def load_data():
     df.columns = df.columns.str.strip().str.lower()
     return df
 
-def get_movie_details(title, year=None):
+def get_movie_details_with_logging(title):
     ia = imdb.IMDb()
     try:
+        logging.info(f"Searching IMDb for movie: {title}")
         results = ia.search_movie(title)
-        if results:
-            # Best match by year if available
-            movie = results[0]
-            for m in results:
-                if year is not None and m.get('year') == year:
-                    movie = m
-                    break
-            movie_id = movie.movieID
-            movie_details = ia.get_movie(movie_id)
-            ia.update(movie_details, info=['main', 'plot', 'vote details'])
-            desc = movie_details.get('plot outline') or "No description found."
-            img_url = movie_details.get('cover url', None)
-            rating = movie_details.get('rating', 'N/A')
-            return desc, img_url, rating
-        else:
-            return 'No description found.', None, 'N/A'
-    except Exception:
-        return 'No description found.', None, 'N/A'
+        if not results:
+            logging.warning("No results found for the movie")
+            return "No description found.", None, "N/A"
+        
+        logging.info(f"Found {len(results)} results. Selecting the first result.")
+        movie = results[0]
+        logging.debug(f"Selected Movie ID: {movie.movieID}, Title: {movie}")
+
+        movie_details = ia.get_movie(movie.movieID)
+        ia.update(movie_details, info=['main', 'plot', 'vote details'])
+        logging.debug(f"Fetched movie details keys: {movie_details.keys()}")
+
+        desc = movie_details.get('plot outline') or "No description found."
+        img_url = movie_details.get('cover url', None)
+        rating = movie_details.get('rating', 'N/A')
+
+        logging.info(f"Description length: {len(desc)}, Image URL: {img_url}, Rating: {rating}")
+        return desc, img_url, rating
+
+    except Exception as e:
+        logging.error(f"Exception while fetching movie details: {e}")
+        return "No description found.", None, "N/A"
 
 def main():
     st.set_page_config(
@@ -75,14 +84,16 @@ def main():
     )
     local_css()
     st.title("🎬 Movie Recommendation System")
+    
     df = load_data()
-    # It is best if your csv has a 'year' column; if not, this will still work using only the title.
     genre_cols = [
         "adventure", "animation", "comedy", "fantasy", "romance", "children",
         "drama", "documentary", "crime", "sci-fi", "horror", "mystery", "war",
         "thriller", "action"
     ]
+    
     data = df[genre_cols]
+    
     st.markdown("### Select your favorite genres:")
     col1, col2 = st.columns(2)
     selected_genres = []
@@ -95,7 +106,9 @@ def main():
         for genre in genre_cols[half:]:
             if st.checkbox(genre, key=genre + "_2"):
                 selected_genres.append(genre)
+                
     st.write("---")
+    
     if st.button("Recommend Movies 🎯"):
         if not selected_genres:
             st.warning("⚠️ Please select at least one genre to get recommendations.")
@@ -105,26 +118,29 @@ def main():
             user_vector = np.array(
                 [1 if genre in selected_genres else 0 for genre in genre_cols]
             ).reshape(1, -1)
+            
             distances, indices = knn.kneighbors(user_vector)
             rec_df = df.iloc[indices[0]].copy()
-            # Pull year if available; otherwise set to None
-            ratings, descriptions, images = [], [], []
-            for idx, row in rec_df.iterrows():
-                year = row.get('year') if 'year' in row else None
-                desc, img_url, rating = get_movie_details(row['title'], year)
+            
+            descriptions, images, ratings = [], [], []
+            for title in rec_df['title']:
+                desc, img_url, rating = get_movie_details_with_logging(title)
                 descriptions.append(desc)
                 images.append(img_url)
                 try:
-                    ratings.append(float(rating))
+                    ratings.append(float(rating) if rating != 'N/A' else 0)
                 except:
                     ratings.append(0)
+            
             rec_df['imdb_rating'] = ratings
             rec_df['desc'] = descriptions
             rec_df['img_url'] = images
+            
             sorted_rec = rec_df.sort_values('imdb_rating', ascending=False).head(5)
+            
             st.markdown("### Top 5 Recommended Movies:")
             for _, row in sorted_rec.iterrows():
-                st.subheader(f"{row['title']} ({int(row['year']) if 'year' in row and pd.notnull(row['year']) else ''})")
+                st.subheader(row['title'])
                 if row['img_url']:
                     st.image(row['img_url'], width=200)
                 st.write(f"**Description:** {row['desc']}")
