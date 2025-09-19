@@ -45,15 +45,23 @@ def load_data():
     df.columns = df.columns.str.strip().str.lower()
     return df
 
-def get_movie_details(title):
+def get_movie_details(title, year=None):
     ia = imdb.IMDb()
     try:
         results = ia.search_movie(title)
         if results:
-            movie = ia.get_movie(results[0].movieID)
-            desc = movie.get('plot outline', 'No description available.')
-            img_url = movie.get('cover url', None)
-            rating = movie.get('rating', 'N/A')
+            # Best match by year if available
+            movie = results[0]
+            for m in results:
+                if year is not None and m.get('year') == year:
+                    movie = m
+                    break
+            movie_id = movie.movieID
+            movie_details = ia.get_movie(movie_id)
+            ia.update(movie_details, info=['main', 'plot', 'vote details'])
+            desc = movie_details.get('plot outline') or "No description found."
+            img_url = movie_details.get('cover url', None)
+            rating = movie_details.get('rating', 'N/A')
             return desc, img_url, rating
         else:
             return 'No description found.', None, 'N/A'
@@ -68,6 +76,7 @@ def main():
     local_css()
     st.title("🎬 Movie Recommendation System")
     df = load_data()
+    # It is best if your csv has a 'year' column; if not, this will still work using only the title.
     genre_cols = [
         "adventure", "animation", "comedy", "fantasy", "romance", "children",
         "drama", "documentary", "crime", "sci-fi", "horror", "mystery", "war",
@@ -98,24 +107,28 @@ def main():
             ).reshape(1, -1)
             distances, indices = knn.kneighbors(user_vector)
             rec_df = df.iloc[indices[0]].copy()
-            # Get IMDb ratings for sorting
-            ratings = []
-            for title in rec_df['title']:
-                _, _, rating = get_movie_details(title)
+            # Pull year if available; otherwise set to None
+            ratings, descriptions, images = [], [], []
+            for idx, row in rec_df.iterrows():
+                year = row.get('year') if 'year' in row else None
+                desc, img_url, rating = get_movie_details(row['title'], year)
+                descriptions.append(desc)
+                images.append(img_url)
                 try:
                     ratings.append(float(rating))
                 except:
                     ratings.append(0)
             rec_df['imdb_rating'] = ratings
+            rec_df['desc'] = descriptions
+            rec_df['img_url'] = images
             sorted_rec = rec_df.sort_values('imdb_rating', ascending=False).head(5)
             st.markdown("### Top 5 Recommended Movies:")
-            for i, row in sorted_rec.iterrows():
-                desc, img_url, rating = get_movie_details(row['title'])
-                st.subheader(f"{row['title']}")
-                if img_url:
-                    st.image(img_url, width=200)
-                st.write(f"**Description:** {desc}")
-                st.write(f"**IMDb Rating:** ⭐ {rating}/10")
+            for _, row in sorted_rec.iterrows():
+                st.subheader(f"{row['title']} ({int(row['year']) if 'year' in row and pd.notnull(row['year']) else ''})")
+                if row['img_url']:
+                    st.image(row['img_url'], width=200)
+                st.write(f"**Description:** {row['desc']}")
+                st.write(f"**IMDb Rating:** ⭐ {row['imdb_rating']}/10")
                 st.write("---")
 
 if __name__ == "__main__":
