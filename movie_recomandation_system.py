@@ -62,7 +62,7 @@ def get_movie_details_with_link(title):
         results = ia.search_movie(title)
         if not results:
             log("No results found for the movie")
-            return "No description found.", None, "N/A", None
+            return "No description found.", None, None
         
         movie = results[0]
         log(f"Selected Movie ID: {movie.movieID}, Title: {movie}")
@@ -78,14 +78,12 @@ def get_movie_details_with_link(title):
             "No description found."
         )
         img_url = movie_details.get('cover url', None)
-        rating = movie_details.get('rating', 'N/A')
         imdb_link = f"https://www.imdb.com/title/tt{movie.movieID}/"
-        log(f"IMDb Link: {imdb_link}, Description length: {len(desc)}, Image URL: {img_url}, Rating: {rating}")
 
-        return desc, img_url, rating, imdb_link
+        return desc, img_url, imdb_link
     except Exception as e:
         log(f"Exception while fetching movie details: {e}")
-        return "No description found.", None, "N/A", None
+        return "No description found.", None, None
 
 def main():
     st.set_page_config(page_title="Welcome to Movie Recommendation System", layout="wide")
@@ -136,27 +134,21 @@ def main():
                 distances, indices = knn.kneighbors(user_vector)
                 rec_df = df.iloc[indices[0]].copy()
 
-                descriptions, images, ratings, links = [], [], [], []
+                descriptions, images, imdb_links = [], [], []
                 for raw_title in rec_df['title']:
                     title = clean_title(raw_title)
-                    desc, img_url, rating, imdb_link = get_movie_details_with_link(title)
+                    desc, img_url, imdb_link = get_movie_details_with_link(title)
                     descriptions.append(desc)
                     images.append(img_url)
-                    links.append(imdb_link)
-                    try:
-                        ratings.append(float(rating) if rating != 'N/A' else 0)
-                    except:
-                        ratings.append(0)
+                    imdb_links.append(imdb_link)
 
-                rec_df['imdb_rating'] = ratings
                 rec_df['desc'] = descriptions
                 rec_df['img_url'] = images
-                rec_df['imdb_link'] = links
-
-                sorted_rec = rec_df.sort_values('imdb_rating', ascending=False).head(5)
+                rec_df['imdb_link'] = imdb_links
 
                 st.markdown("### Top 5 Recommended Movies:")
 
+                sorted_rec = rec_df.head(5)
                 movie_cols = st.columns(2)
                 for idx, (_, row) in enumerate(sorted_rec.iterrows()):
                     with movie_cols[idx % 2]:
@@ -165,15 +157,9 @@ def main():
                         if row['img_url']:
                             st.image(row['img_url'], width=200)
                         st.write(f"**Description:** {row['desc']}")
-                        st.write(f"**IMDb Rating:** ⭐ {row['imdb_rating']}/10")
                         if row['imdb_link']:
                             st.markdown(f"[IMDb Link]({row['imdb_link']})")
                         st.write("---")
-
-    # Optionally show debug logs below
-    # st.markdown("### Debug Logs")
-    # for msg in log_messages[-30:]:
-    #     st.text(msg)
 
 if __name__ == "__main__":
     main()
