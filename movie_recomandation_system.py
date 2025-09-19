@@ -88,7 +88,7 @@ def get_movie_details_with_link(title):
         return "No description found.", None, "N/A", None
 
 def main():
-    st.set_page_config(page_title="Welcome to Movie Recommendation System", layout="centered")
+    st.set_page_config(page_title="Welcome to Movie Recommendation System", layout="wide")
     local_css()
     st.title("🎬 Movie Recommendation System")
 
@@ -100,66 +100,80 @@ def main():
     ]
     data = df[genre_cols]
 
-    st.markdown("### Select your favorite genres:")
-    col1, col2 = st.columns(2)
-    selected_genres = []
-    half = len(genre_cols) // 2
-    with col1:
-        for genre in genre_cols[:half]:
-            if st.checkbox(genre, key=genre):
-                selected_genres.append(genre)
-    with col2:
-        for genre in genre_cols[half:]:
-            if st.checkbox(genre, key=genre + "_2"):
-                selected_genres.append(genre)
+    col_left, col_right = st.columns([1, 2])
 
-    st.write("---")
+    with col_left:
+        st.markdown("### Select your favorite genres:")
+        selected_genres = []
+        half = len(genre_cols) // 2
+        col1, col2 = st.columns(2)
+        with col1:
+            for genre in genre_cols[:half]:
+                if st.checkbox(genre, key=genre):
+                    selected_genres.append(genre)
+        with col2:
+            for genre in genre_cols[half:]:
+                if st.checkbox(genre, key=genre + "_2"):
+                    selected_genres.append(genre)
 
-    if st.button("Recommend Movies 🎯"):
-        if not selected_genres:
-            st.warning("⚠️ Please select at least one genre to get recommendations.")
-        else:
-            knn = NearestNeighbors(n_neighbors=10, metric='cosine')
-            knn.fit(data)
-            user_vector = np.array([1 if genre in selected_genres else 0 for genre in genre_cols]).reshape(1, -1)
+        st.write("")
+        recommend_button = st.button("Recommend Movies 🎯")
 
-            distances, indices = knn.kneighbors(user_vector)
-            rec_df = df.iloc[indices[0]].copy()
+    with col_right:
+        if 'selected_genres' not in locals():
+            selected_genres = []
 
-            descriptions, images, ratings, links = [], [], [], []
-            for raw_title in rec_df['title']:
-                title = clean_title(raw_title)
-                desc, img_url, rating, imdb_link = get_movie_details_with_link(title)
-                descriptions.append(desc)
-                images.append(img_url)
-                links.append(imdb_link)
-                try:
-                    ratings.append(float(rating) if rating != 'N/A' else 0)
-                except:
-                    ratings.append(0)
+        if recommend_button:
+            if not selected_genres:
+                st.warning("⚠️ Please select at least one genre to get recommendations.")
+            else:
+                knn = NearestNeighbors(n_neighbors=10, metric='cosine')
+                knn.fit(data)
+                user_vector = np.array(
+                    [1 if genre in selected_genres else 0 for genre in genre_cols]
+                ).reshape(1, -1)
 
-            rec_df['imdb_rating'] = ratings
-            rec_df['desc'] = descriptions
-            rec_df['img_url'] = images
-            rec_df['imdb_link'] = links
+                distances, indices = knn.kneighbors(user_vector)
+                rec_df = df.iloc[indices[0]].copy()
 
-            sorted_rec = rec_df.sort_values('imdb_rating', ascending=False).head(5)
+                descriptions, images, ratings, links = [], [], [], []
+                for raw_title in rec_df['title']:
+                    title = clean_title(raw_title)
+                    desc, img_url, rating, imdb_link = get_movie_details_with_link(title)
+                    descriptions.append(desc)
+                    images.append(img_url)
+                    links.append(imdb_link)
+                    try:
+                        ratings.append(float(rating) if rating != 'N/A' else 0)
+                    except:
+                        ratings.append(0)
 
-            st.markdown("### Top 5 Recommended Movies:")
-            for _, row in sorted_rec.iterrows():
-                title = clean_title(row['title'])
-                st.subheader(title)
-                if row['img_url']:
-                    st.image(row['img_url'], width=200)
-                st.write(f"**Description:** {row['desc']}")
-                st.write(f"**IMDb Rating:** ⭐ {row['imdb_rating']}/10")
-                if row['imdb_link']:
-                    st.markdown(f"[IMDb Link]({row['imdb_link']})")
-                st.write("---")
+                rec_df['imdb_rating'] = ratings
+                rec_df['desc'] = descriptions
+                rec_df['img_url'] = images
+                rec_df['imdb_link'] = links
 
-            st.markdown("### Debug Logs")
-            for msg in log_messages[-30:]:
-                st.text(msg)
+                sorted_rec = rec_df.sort_values('imdb_rating', ascending=False).head(5)
+
+                st.markdown("### Top 5 Recommended Movies:")
+
+                movie_cols = st.columns(2)
+                for idx, (_, row) in enumerate(sorted_rec.iterrows()):
+                    with movie_cols[idx % 2]:
+                        title = clean_title(row['title'])
+                        st.subheader(title)
+                        if row['img_url']:
+                            st.image(row['img_url'], width=200)
+                        st.write(f"**Description:** {row['desc']}")
+                        st.write(f"**IMDb Rating:** ⭐ {row['imdb_rating']}/10")
+                        if row['imdb_link']:
+                            st.markdown(f"[IMDb Link]({row['imdb_link']})")
+                        st.write("---")
+
+    # Optionally show debug logs below
+    # st.markdown("### Debug Logs")
+    # for msg in log_messages[-30:]:
+    #     st.text(msg)
 
 if __name__ == "__main__":
     main()
