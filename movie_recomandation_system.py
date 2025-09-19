@@ -3,10 +3,13 @@ import pandas as pd
 import numpy as np
 from sklearn.neighbors import NearestNeighbors
 import imdb
-import logging
 
-# Setup logging to console for debugging
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+# Global list to store logs for display
+log_messages = []
+
+def log(message):
+    print(message)  # Also print to console for terminal logs
+    log_messages.append(message)
 
 def local_css():
     st.markdown(
@@ -49,33 +52,34 @@ def load_data():
     df.columns = df.columns.str.strip().str.lower()
     return df
 
-def get_movie_details_with_logging(title):
+def get_movie_details_with_link(title):
     ia = imdb.IMDb()
     try:
-        logging.info(f"Searching IMDb for movie: {title}")
+        log(f"Searching IMDb for movie: {title}")
         results = ia.search_movie(title)
         if not results:
-            logging.warning("No results found for the movie")
-            return "No description found.", None, "N/A"
+            log("No results found for the movie")
+            return "No description found.", None, "N/A", None
         
-        logging.info(f"Found {len(results)} results. Selecting the first result.")
+        log(f"Found {len(results)} results. Selecting the first result.")
         movie = results[0]
-        logging.debug(f"Selected Movie ID: {movie.movieID}, Title: {movie}")
+        log(f"Selected Movie ID: {movie.movieID}, Title: {movie}")
 
         movie_details = ia.get_movie(movie.movieID)
         ia.update(movie_details, info=['main', 'plot', 'vote details'])
-        logging.debug(f"Fetched movie details keys: {movie_details.keys()}")
+        log(f"Fetched movie details keys: {movie_details.keys()}")
 
         desc = movie_details.get('plot outline') or "No description found."
         img_url = movie_details.get('cover url', None)
         rating = movie_details.get('rating', 'N/A')
+        imdb_link = f"https://www.imdb.com/title/tt{movie.movieID}/"
+        log(f"IMDb Link: {imdb_link}, Description length: {len(desc)}, Image URL: {img_url}, Rating: {rating}")
 
-        logging.info(f"Description length: {len(desc)}, Image URL: {img_url}, Rating: {rating}")
-        return desc, img_url, rating
+        return desc, img_url, rating, imdb_link
 
     except Exception as e:
-        logging.error(f"Exception while fetching movie details: {e}")
-        return "No description found.", None, "N/A"
+        log(f"Exception while fetching movie details: {e}")
+        return "No description found.", None, "N/A", None
 
 def main():
     st.set_page_config(
@@ -84,16 +88,15 @@ def main():
     )
     local_css()
     st.title("🎬 Movie Recommendation System")
-    
+
     df = load_data()
     genre_cols = [
         "adventure", "animation", "comedy", "fantasy", "romance", "children",
         "drama", "documentary", "crime", "sci-fi", "horror", "mystery", "war",
         "thriller", "action"
     ]
-    
     data = df[genre_cols]
-    
+
     st.markdown("### Select your favorite genres:")
     col1, col2 = st.columns(2)
     selected_genres = []
@@ -106,9 +109,9 @@ def main():
         for genre in genre_cols[half:]:
             if st.checkbox(genre, key=genre + "_2"):
                 selected_genres.append(genre)
-                
-    st.write("---")
     
+    st.write("---")
+
     if st.button("Recommend Movies 🎯"):
         if not selected_genres:
             st.warning("⚠️ Please select at least one genre to get recommendations.")
@@ -118,15 +121,16 @@ def main():
             user_vector = np.array(
                 [1 if genre in selected_genres else 0 for genre in genre_cols]
             ).reshape(1, -1)
-            
+
             distances, indices = knn.kneighbors(user_vector)
             rec_df = df.iloc[indices[0]].copy()
-            
-            descriptions, images, ratings = [], [], []
+
+            descriptions, images, ratings, links = [], [], [], []
             for title in rec_df['title']:
-                desc, img_url, rating = get_movie_details_with_logging(title)
+                desc, img_url, rating, imdb_link = get_movie_details_with_link(title)
                 descriptions.append(desc)
                 images.append(img_url)
+                links.append(imdb_link)
                 try:
                     ratings.append(float(rating) if rating != 'N/A' else 0)
                 except:
@@ -135,9 +139,10 @@ def main():
             rec_df['imdb_rating'] = ratings
             rec_df['desc'] = descriptions
             rec_df['img_url'] = images
-            
+            rec_df['imdb_link'] = links
+
             sorted_rec = rec_df.sort_values('imdb_rating', ascending=False).head(5)
-            
+
             st.markdown("### Top 5 Recommended Movies:")
             for _, row in sorted_rec.iterrows():
                 st.subheader(row['title'])
@@ -145,7 +150,14 @@ def main():
                     st.image(row['img_url'], width=200)
                 st.write(f"**Description:** {row['desc']}")
                 st.write(f"**IMDb Rating:** ⭐ {row['imdb_rating']}/10")
+                if row['imdb_link']:
+                    st.markdown(f"[IMDb Link]({row['imdb_link']})")
                 st.write("---")
+
+            # Show logs inside Streamlit app for debugging
+            st.markdown("### Debug Logs")
+            for msg in log_messages[-30:]:  # show last 30 messages
+                st.text(msg)
 
 if __name__ == "__main__":
     main()
