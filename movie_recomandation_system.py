@@ -3,12 +3,13 @@ import pandas as pd
 import numpy as np
 from sklearn.neighbors import NearestNeighbors
 import imdb
+import re
 
-# Global list to store logs for display
+# Global log messages list
 log_messages = []
 
 def log(message):
-    print(message)  # Also print to console for terminal logs
+    print(message)
     log_messages.append(message)
 
 def local_css():
@@ -52,6 +53,11 @@ def load_data():
     df.columns = df.columns.str.strip().str.lower()
     return df
 
+def clean_title(raw_title):
+    # Strip year in parentheses, e.g. "Oblivion (2013)" -> "Oblivion"
+    cleaned = re.sub(r'\s*\(\d{4}\)', '', raw_title)
+    return cleaned.strip()
+
 def get_movie_details_with_link(title):
     ia = imdb.IMDb()
     try:
@@ -61,7 +67,6 @@ def get_movie_details_with_link(title):
             log("No results found for the movie")
             return "No description found.", None, "N/A", None
         
-        log(f"Found {len(results)} results. Selecting the first result.")
         movie = results[0]
         log(f"Selected Movie ID: {movie.movieID}, Title: {movie}")
 
@@ -76,7 +81,7 @@ def get_movie_details_with_link(title):
         log(f"IMDb Link: {imdb_link}, Description length: {len(desc)}, Image URL: {img_url}, Rating: {rating}")
 
         return desc, img_url, rating, imdb_link
-
+        
     except Exception as e:
         log(f"Exception while fetching movie details: {e}")
         return "No description found.", None, "N/A", None
@@ -109,7 +114,7 @@ def main():
         for genre in genre_cols[half:]:
             if st.checkbox(genre, key=genre + "_2"):
                 selected_genres.append(genre)
-    
+
     st.write("---")
 
     if st.button("Recommend Movies 🎯"):
@@ -126,7 +131,8 @@ def main():
             rec_df = df.iloc[indices[0]].copy()
 
             descriptions, images, ratings, links = [], [], [], []
-            for title in rec_df['title']:
+            for raw_title in rec_df['title']:
+                title = clean_title(raw_title)
                 desc, img_url, rating, imdb_link = get_movie_details_with_link(title)
                 descriptions.append(desc)
                 images.append(img_url)
@@ -135,7 +141,7 @@ def main():
                     ratings.append(float(rating) if rating != 'N/A' else 0)
                 except:
                     ratings.append(0)
-            
+
             rec_df['imdb_rating'] = ratings
             rec_df['desc'] = descriptions
             rec_df['img_url'] = images
@@ -145,7 +151,8 @@ def main():
 
             st.markdown("### Top 5 Recommended Movies:")
             for _, row in sorted_rec.iterrows():
-                st.subheader(row['title'])
+                title = clean_title(row['title'])
+                st.subheader(title)
                 if row['img_url']:
                     st.image(row['img_url'], width=200)
                 st.write(f"**Description:** {row['desc']}")
@@ -154,9 +161,8 @@ def main():
                     st.markdown(f"[IMDb Link]({row['imdb_link']})")
                 st.write("---")
 
-            # Show logs inside Streamlit app for debugging
             st.markdown("### Debug Logs")
-            for msg in log_messages[-30:]:  # show last 30 messages
+            for msg in log_messages[-30:]:
                 st.text(msg)
 
 if __name__ == "__main__":
