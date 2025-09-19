@@ -5,7 +5,6 @@ from sklearn.neighbors import NearestNeighbors
 import imdb
 import re
 
-# Global log messages list
 log_messages = []
 
 def log(message):
@@ -54,9 +53,7 @@ def load_data():
     return df
 
 def clean_title(raw_title):
-    # Strip year in parentheses, e.g. "Oblivion (2013)" -> "Oblivion"
-    cleaned = re.sub(r'\s*\(\d{4}\)', '', raw_title)
-    return cleaned.strip()
+    return re.sub(r'\s*\(\d{4}\)', '', raw_title).strip()
 
 def get_movie_details_with_link(title):
     ia = imdb.IMDb()
@@ -71,26 +68,27 @@ def get_movie_details_with_link(title):
         log(f"Selected Movie ID: {movie.movieID}, Title: {movie}")
 
         movie_details = ia.get_movie(movie.movieID)
-        ia.update(movie_details, info=['main', 'plot', 'vote details'])
+        ia.update(movie_details, info=['main', 'plot', 'synopsis', 'vote details'])
         log(f"Fetched movie details keys: {movie_details.keys()}")
 
-        desc = movie_details.get('plot outline') or "No description found."
+        desc = (
+            movie_details.get('plot outline') or
+            movie_details.get('plot') or
+            movie_details.get('synopsis') or
+            "No description found."
+        )
         img_url = movie_details.get('cover url', None)
         rating = movie_details.get('rating', 'N/A')
         imdb_link = f"https://www.imdb.com/title/tt{movie.movieID}/"
         log(f"IMDb Link: {imdb_link}, Description length: {len(desc)}, Image URL: {img_url}, Rating: {rating}")
 
         return desc, img_url, rating, imdb_link
-        
     except Exception as e:
         log(f"Exception while fetching movie details: {e}")
         return "No description found.", None, "N/A", None
 
 def main():
-    st.set_page_config(
-        page_title="Welcome to Movie Recommendation System",
-        layout="centered",
-    )
+    st.set_page_config(page_title="Welcome to Movie Recommendation System", layout="centered")
     local_css()
     st.title("🎬 Movie Recommendation System")
 
@@ -123,9 +121,7 @@ def main():
         else:
             knn = NearestNeighbors(n_neighbors=10, metric='cosine')
             knn.fit(data)
-            user_vector = np.array(
-                [1 if genre in selected_genres else 0 for genre in genre_cols]
-            ).reshape(1, -1)
+            user_vector = np.array([1 if genre in selected_genres else 0 for genre in genre_cols]).reshape(1, -1)
 
             distances, indices = knn.kneighbors(user_vector)
             rec_df = df.iloc[indices[0]].copy()
