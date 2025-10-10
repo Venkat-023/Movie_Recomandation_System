@@ -59,9 +59,15 @@ User selects genres via Streamlit interface.
 
 Encodes genre selections; computes similarity using scikit-learn’s NearestNeighbors.
 
-Displays top-5 recommended movies based on KNN scores.
 
 Updating the App
 Make changes locally, commit, and push to GitHub. Render redeploys automatically.
 
 To update libraries, edit requirements.txt and redeploy.
+
+Future Work: Expansion of this recomandation system into a Chatbot using rag where the user can ask the chatbot about the movie
+like whats the rating, budget, date of release, rotten tomatoes or any other queries where the chatbot can answer
+
+Addition of multilingual movies , as of now it has hollywood movies so the next stage would be adding other language movies like bollywood, tollywood etc.
+
+Displays top-5 recommended movies based on KNN scores.
