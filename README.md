@@ -1,3 +1,13 @@
+---
+title: CineMatch AI
+emoji: 🎬
+colorFrom: red
+colorTo: indigo
+sdk: docker
+app_port: 7860
+pinned: false
+---
+
 # CineMatch AI
 
 CineMatch AI is an upgraded movie recommendation experience built with Streamlit. Instead of a plain checkbox demo, it now feels more like a lightweight streaming discovery product: users can combine genres, start from a favorite movie, and browse polished recommendation cards ranked from a local movie catalog.
@@ -35,14 +45,12 @@ streamlit run movie_recomandation_system.py
 
 ## Deployment
 
-This project has been prepared for Docker-based deployment on Hugging Face Spaces. Once the Hugging Face repository link is connected, the app can be deployed on port `7860`.
+This project is prepared for Docker-based deployment on Hugging Face Spaces and is now deployed on port `7860`.
 
-### Planned live links
+### Live links
 
-- Hugging Face Space: coming soon
-- Direct app URL: coming soon
-
-After deployment, this README will be updated with the live links.
+- Hugging Face Space: https://huggingface.co/spaces/Venkat-023/Movie-Recommandation-System
+- Direct app URL: https://venkat-023-movie-recommandation-system.hf.space
 
 ## Recommendation logic
 

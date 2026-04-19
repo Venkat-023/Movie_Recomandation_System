@@ -2,3 +2,7 @@ __pycache__/
 .pytest_cache/
 .streamlit/secrets.toml
 *.pyc
+final_movies.csv
+modified_full_movies_dataset.xls
+movies_data.csv
+movies_list.csv
