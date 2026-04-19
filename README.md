@@ -1,73 +1,53 @@
-Movie Recommendation System
-A Streamlit web app that recommends movies based on genres using KNN (NearestNeighbors) with pandas and scikit-learn. Deployed on Render for cloud access.
+# CineMatch AI
 
-Features
-Genre Selection: User selects genres using checkboxes for personalized recommendations.
+CineMatch AI is an upgraded movie recommendation experience built with Streamlit. Instead of a plain checkbox demo, it now feels more like a lightweight streaming discovery product: users can combine genres, start from a favorite movie, and browse polished recommendation cards ranked from a local movie catalog.
 
-Top-5 Recommendations: Shows top-5 movies similar to selected genres, powered by KNN algorithm.
+## What changed
 
-Clean Interface: Built with Streamlit for quick interactivity and a simple, friendly UI.
+- Stronger interface with a cinematic visual direction
+- Offline-first recommendation flow that removes the fragile IMDb dependency
+- Anchor-title mode so users can start from a movie they already love
+- Better recommendation cards with match scores and genre reasoning
+- Prepared for Hugging Face deployment with Docker and Streamlit config files
 
-Requirements
-Python 3.8+
+## Features
 
-Libraries: streamlit, pandas, scikit-learn, etc.
+- Genre-based discovery from a catalog of 57k+ movies
+- Title-assisted recommendations using cosine similarity
+- Fast local inference using pandas and scikit-learn
+- Cleaner layout designed for demos, hackathons, and judging
+- Deployment-ready structure for Streamlit on Hugging Face Spaces
 
-Install dependencies:
+## Run locally
 
-bash
+```bash
 pip install -r requirements.txt
-or auto-generate:
+streamlit run movie_recomandation_system.py
+```
 
-bash
-pip install pipreqs
-pipreqs --encoding=utf8
-Usage
-Clone the Repository:
+## Project files
 
-bash
-git clone https://github.com/your-username/movie-recommend-app.git
-cd movie-recommend-app
-Run Locally:
+- `movie_recomandation_system.py` - main Streamlit app
+- `final10.xls` - primary movie dataset used by the recommender
+- `requirements.txt` - Python dependencies
+- `Dockerfile` - deployment container for Hugging Face Spaces
+- `.streamlit/config.toml` - Streamlit runtime configuration
 
-bash
-streamlit run app.py
-Deploy on Render:
+## Deployment
 
-Push your code to GitHub.
+This project has been prepared for Docker-based deployment on Hugging Face Spaces. Once the Hugging Face repository link is connected, the app can be deployed on port `7860`.
 
-Login to Render and select “New Web Service.”
+### Planned live links
 
-Connect your GitHub repo.
+- Hugging Face Space: coming soon
+- Direct app URL: coming soon
 
-Set start command to: streamlit run app.py
+After deployment, this README will be updated with the live links.
 
-Deploy and share your Render URL.
+## Recommendation logic
 
-Project Structure
-text
-movie-recommend-app/
-│
-├── app.py                # Streamlit main app
-├── requirements.txt      # Python dependencies
-├── data/                 # Movie dataset (CSV)
-└── README.md             # Project documentation
-How it Works
-Loads a movie dataset with boolean genre columns.
+The app loads a local genre matrix from `final10.xls`, converts user genre selections into a preference vector, and ranks movies using cosine similarity. If a user selects an anchor movie, the app blends that movie's genre signature with the selected genres to produce stronger taste-based matches.
 
-User selects genres via Streamlit interface.
+## Why this version is better
 
-Encodes genre selections; computes similarity using scikit-learn’s NearestNeighbors.
-
-
-Updating the App
-Make changes locally, commit, and push to GitHub. Render redeploys automatically.
-
-To update libraries, edit requirements.txt and redeploy.
-
-Future Work: Expansion of this recomandation system into a Chatbot using rag where the user can ask the chatbot about the movie
-like whats the rating, budget, date of release, rotten tomatoes or any other queries where the chatbot can answer
-
-Addition of multilingual movies , as of now it has hollywood movies so the next stage would be adding other language movies like bollywood, tollywood etc.
-
-Displays top-5 recommended movies based on KNN scores.
+The previous version relied on live IMDb calls for descriptions and links, which is not ideal for stable hosted deployment. This upgraded version keeps the recommendation flow local and dependable, improves the visual design substantially, and presents the project in a more product-focused way.
