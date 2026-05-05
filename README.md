@@ -1,13 +1,3 @@
----
-title: CineMatch AI
-emoji: 🎬
-colorFrom: red
-colorTo: indigo
-sdk: docker
-app_port: 7860
-pinned: false
----
-
 # CineMatch AI
 
 CineMatch AI is an upgraded movie recommendation experience built with Streamlit. Instead of a plain checkbox demo, it now feels more like a lightweight streaming discovery product: users can combine genres, start from a favorite movie, and browse polished recommendation cards ranked from a local movie catalog.
